@@ -1,5 +1,5 @@
 {
-  "name": "express-resource",
+  "name": "express-resource-middleware",
   "description": "Resourceful routing for express",
   "version": "1.0.0",
   "homepage": "https://github.com/visionmedia/express-resource",
@@ -8,7 +8,15 @@
     {
       "name": "Daniel Gasienica",
       "email": "daniel@gasienica.ch"
-    }
+    },
+    {
+      "name": "Marco Pantaleoni",
+      "email": "marco.pantaleoni@gmail.com"
+    },
+    {
+      "name": "Michael Weibel",
+      "email": "michael.weibel@gmail.com"
+    },
   ],
   "dependencies": {
     "lingo": ">= 0.0.4",
@@ -27,7 +35,8 @@
   "keywords": [
     "express",
     "rest",
-    "resource"
+    "resource",
+    "middleware"
   ],
   "main": "index",
   "engines": {
