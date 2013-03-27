@@ -16,7 +16,7 @@
     {
       "name": "Michael Weibel",
       "email": "michael.weibel@gmail.com"
-    },
+    }
   ],
   "dependencies": {
     "lingo": ">= 0.0.4",
