@@ -22,7 +22,7 @@ var express = require('express')
  */
 
 var orderedActions = [
-   'index'    //  GET  /
+  'index'    //  GET  /
   , 'new'     //  GET  /new
   , 'create'  //  POST /
   , 'show'    //  GET  /:id
@@ -31,9 +31,16 @@ var orderedActions = [
   , 'destroy' //  DEL  /:id
 ];
 
-/**
- * Expose `Resource`.
- */
+var defaultMiddleware = {
+  'index': null
+  , 'new': null
+  , 'create': null
+  , 'show': null
+  , 'edit': null
+  , 'update': null
+  , 'destroy': null
+  , '*': null
+};
 
 module.exports = Resource;
 
@@ -46,11 +53,9 @@ module.exports = Resource;
  * @api private
  */
 
-function Resource(name, actions, app) {
+function Resource(name, actions, app, opts) {
   this.name = name;
   this.app = app;
-  this.options = opts || {};
-  this.middleware = this.options.middleware || defaultMiddleware;
   this.routes = {};
   actions = actions || {};
   this.base = actions.base || '/';
@@ -59,8 +64,12 @@ function Resource(name, actions, app) {
   this.id = actions.id || this.defaultId;
   this.param = ':' + this.id;
 
+  this.options = opts || {};
+  this.middleware = this.options.middleware || defaultMiddleware;
+
+
   // default actions
-  for (var i = 0, key; i < orderedActions.length; ++i) {
+  for (var i = 0, key; i < orderedActions.length; i++) {
     key = orderedActions[i];
     if (actions[key]) this.mapDefaultAction(key, actions[key]);
   }
@@ -136,7 +145,7 @@ Resource.prototype.map = function(method, path, fnmap){
   if ('function' == typeof fnmap) {
     middleware = [];
     fn = fnmap;
-  } else if (isArray(fnmap) && (fnmap.length > 1) && ('0' in Object(fnmap))) {
+  } else if (Array.isArray(fnmap) && (fnmap.length > 1) && ('0' in Object(fnmap))) {
     middleware = fnmap.slice(0, fnmap.length-1);
     fn = fnmap[fnmap.length-1];
   } else if (('object' == typeof fnmap) && fnmap.hasOwnProperty('fn')) {
@@ -147,10 +156,13 @@ Resource.prototype.map = function(method, path, fnmap){
     fn = fnmap;
   }
 
-   if (isArray(fn) && (fn.length > 1) && ('0' in Object(fn)) && (middleware.length == 0)) {
+   if (Array.isArray(fn) && (fn.length > 1) && ('0' in Object(fn)) && (middleware.length == 0)) {
     middleware = middleware.concat(fn.slice(0, fn.length-1));
     fn = fn[fn.length-1];
   } else if (('object' == typeof fn) && fn.hasOwnProperty('fn') && fn.hasOwnProperty('middleware')) {
+    if (!Array.isArray(middleware)) {
+      middleware = [middleware];
+    }
     middleware = middleware.concat(fn.middleware);
     fn = fn.fn;
   }
@@ -280,7 +292,7 @@ methods.concat(['del', 'all']).forEach(function(method){
   Resource.prototype[method] = function(path, fn){
     if ('function' == typeof path
       || 'object' == typeof path) fn = path, path = '';
-    var middleware = this.middleware[method] || [];
+    var middleware = this.middleware[method] || []; //??
     this.map(method, path, fn);
     return this;
   }
@@ -294,7 +306,6 @@ methods.concat(['del', 'all']).forEach(function(method){
  * @return {Resource}
  * @api public
  */
-
 app.resource = function(name, actions, opts){
   var options = actions || {};
   if ('object' == typeof name) actions = name, name = null;
