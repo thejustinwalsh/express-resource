@@ -1,7 +1,7 @@
 
 /*!
  * Express - Resource
- * Copyright(c) 2010-2011 TJ Holowaychuk <tj@vision-media.ca>
+ * Copyright(c) 2010-2012 TJ Holowaychuk <tj@vision-media.ca>
  * Copyright(c) 2011 Daniel Gasienica <daniel@gasienica.ch>
  * MIT Licensed
  */
@@ -11,7 +11,10 @@
  */
 
 var express = require('express')
+  , methods = require('methods')
+  , debug = require('debug')('express-resource')
   , lingo = require('lingo')
+  , app = express.application
   , en = lingo.en;
 
 /**
@@ -19,29 +22,20 @@ var express = require('express')
  */
 
 var orderedActions = [
-  'index'    //  GET  /
-  ,'new'     //  GET  /new
-  ,'create'  //  POST /
-  ,'show'    //  GET  /:id
-  ,'edit'    //  GET  /edit/:id
-  ,'update'  //  PUT  /:id
-  ,'destroy' //  DEL  /:id
+   'index'    //  GET  /
+  , 'new'     //  GET  /new
+  , 'create'  //  POST /
+  , 'show'    //  GET  /:id
+  , 'edit'    //  GET  /edit/:id
+  , 'update'  //  PUT  /:id
+  , 'destroy' //  DEL  /:id
 ];
 
-var defaultMiddleware = {
-  'index': null
-  ,'new': null
-  ,'create': null
-  ,'show': null
-  ,'edit': null
-  ,'update': null
-  ,'destroy': null
-  ,'*': null
-};
+/**
+ * Expose `Resource`.
+ */
 
-function isArray(obj) {
-  return Object.prototype.toString.call(obj) === '[object Array]';
-}
+module.exports = Resource;
 
 /**
  * Initialize a new `Resource` with the given `name` and `actions`.
@@ -52,7 +46,7 @@ function isArray(obj) {
  * @api private
  */
 
-var Resource = module.exports = function Resource(name, actions, app, opts) {
+function Resource(name, actions, app) {
   this.name = name;
   this.app = app;
   this.options = opts || {};
@@ -66,7 +60,7 @@ var Resource = module.exports = function Resource(name, actions, app, opts) {
   this.param = ':' + this.id;
 
   // default actions
-  for (var i=0, key; i < orderedActions.length; i++) {
+  for (var i = 0, key; i < orderedActions.length; ++i) {
     key = orderedActions[i];
     if (actions[key]) this.mapDefaultAction(key, actions[key]);
   }
@@ -97,7 +91,7 @@ Resource.prototype.load = function(fn){
       req[id] = obj;
       next();
     };
-    
+
     // Maintain backward compatibility
     if (2 == fn.length) {
       fn(req.params[id], callback);
@@ -151,7 +145,7 @@ Resource.prototype.map = function(method, path, fnmap){
   } else {
     middleware = [];
     fn = fnmap;
-  } 
+  }
 
    if (isArray(fn) && (fn.length > 1) && ('0' in Object(fn)) && (middleware.length == 0)) {
     middleware = middleware.concat(fn.slice(0, fn.length-1));
@@ -189,14 +183,12 @@ Resource.prototype.map = function(method, path, fnmap){
   // apply the route
   this.app[method](route, middleware, function(req, res, next){
     req.format = req.params.format || req.format || self.format;
-    if (req.format) res.contentType(req.format);
+    if (req.format) res.type(req.format);
     if ('object' == typeof fn) {
-      if (req.format && fn[req.format]) {
+      if (fn[req.format]) {
         fn[req.format](req, res, next);
-      } else if (fn.default) {
-        fn.default(req, res, next);
       } else {
-        res.send(406);
+        res.format(fn);
       }
     } else {
       fn(req, res, next);
@@ -231,8 +223,13 @@ Resource.prototype.add = function(resource){
     for (var key in routes) {
       route = routes[key];
       delete routes[key];
-      app[method](key).remove();
-      resource.map(route.method, route.orig, route.fnmap);
+      if (method == 'del') method = 'delete';
+      app.routes[method].forEach(function(route, i){
+        if (route.path == key) {
+          app.routes[method].splice(i, 1);
+        }
+      })
+      resource.map(route.method, route.orig, route.fn);
     }
   }
 
@@ -279,7 +276,7 @@ Resource.prototype.mapDefaultAction = function(key, fn){
  * Setup http verb methods.
  */
 
-express.router.methods.concat(['del', 'all']).forEach(function(method){
+methods.concat(['del', 'all']).forEach(function(method){
   Resource.prototype[method] = function(path, fn){
     if ('function' == typeof path
       || 'object' == typeof path) fn = path, path = '';
@@ -298,8 +295,7 @@ express.router.methods.concat(['del', 'all']).forEach(function(method){
  * @api public
  */
 
-express.HTTPServer.prototype.resource =
-express.HTTPSServer.prototype.resource = function(name, actions, opts){
+app.resource = function(name, actions, opts){
   var options = actions || {};
   if ('object' == typeof name) actions = name, name = null;
   if (options.id) actions.id = options.id;

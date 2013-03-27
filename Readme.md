@@ -1,6 +1,7 @@
 # Express Resource
 
-  express-resource provides resourceful routing to express.
+  express-resource provides resourceful routing to express. For Express 2.x
+  use a version __below__ 1.0, for Express 3.x use 1.x.
 
 ## Installation
 
@@ -93,7 +94,7 @@ Resources have the concept of "auto-loading" associated data. For example we can
 
       app.resource('users', { show: ..., load: User.load });
       
- With the auto-loader defined, the `req.user` object will be available now be available to the actions automatically. We may pass the "load" option as the third param as well, although this is equivalent to above, but allows you to either export ".load" along with your actions, or passing it explicitly:
+ With the auto-loader defined, the `req.user` object will now be available to the actions automatically. We may pass the "load" option as the third param as well, although this is equivalent to above, but allows you to either export ".load" along with your actions, or passing it explicitly:
  
      app.resource('users', require('./user'), { load: User.load });
 
@@ -232,7 +233,7 @@ Then run the tests:
 
     The MIT License
 
-    Copyright (c) 2010-2011 TJ Holowaychuk <tj@vision-media.ca>
+    Copyright (c) 2010-2012 TJ Holowaychuk <tj@vision-media.ca>
     Copyright (c) 2011 Daniel Gasienica <daniel@gasienica.ch>
 
     Permission is hereby granted, free of charge, to any person obtaining
