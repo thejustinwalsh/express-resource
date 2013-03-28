@@ -308,7 +308,7 @@ methods.concat(['del', 'all']).forEach(function(method){
  */
 app.resource = function(name, actions, opts){
   var options = actions || {};
-  if ('object' == typeof name) actions = name, name = null;
+  if ('object' == typeof name) opts = actions, actions = name, name = null;
   if (options.id) actions.id = options.id;
   this.resources = this.resources || {};
   if (!actions) return this.resources[name] || new Resource(name, null, this, opts);
