@@ -198,7 +198,10 @@ Resource.prototype.map = function(method, path, fnmap){
     };
 
     // Maintain backward compatibility
-    if (2 == self.loadFunction.length) {
+    if (!self.loadFunction) {
+      callback(null, {});
+    }
+    else if (2 == self.loadFunction.length) {
       self.loadFunction(req.params[id], callback);
     } else {
       self.loadFunction(req, req.params[id], callback);
