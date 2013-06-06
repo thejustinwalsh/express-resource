@@ -31,6 +31,21 @@ var orderedActions = [
   , 'destroy' //  DEL  /:id
 ];
 
+var defaultMiddleware = {
+  'index': null
+  ,'new': null
+  ,'create': null
+  ,'show': null
+  ,'edit': null
+  ,'update': null
+  ,'destroy': null
+  ,'*': null
+};
+
+function isArray(obj) {
+  return Object.prototype.toString.call(obj) === '[object Array]';
+}
+
 /**
  * Expose `Resource`.
  */
@@ -46,7 +61,7 @@ module.exports = Resource;
  * @api private
  */
 
-function Resource(name, actions, app) {
+function Resource(name, actions, app, opts) {
   this.name = name;
   this.app = app;
   this.options = opts || {};
