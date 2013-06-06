@@ -93,28 +93,7 @@ function Resource(name, actions, app, opts) {
  */
 
 Resource.prototype.load = function(fn){
-  var self = this
-    , id = this.id;
-
   this.loadFunction = fn;
-  this.app.param(this.id, function(req, res, next){
-    function callback(err, obj){
-      if (err) return next(err);
-      // TODO: ideally we should next() passed the
-      // route handler
-      if (null == obj) return res.send(404);
-      req[id] = obj;
-      next();
-    };
-
-    // Maintain backward compatibility
-    if (2 == fn.length) {
-      fn(req.params[id], callback);
-    } else {
-      fn(req, req.params[id], callback);
-    }
-  });
-
   return this;
 };
 
@@ -196,17 +175,33 @@ Resource.prototype.map = function(method, path, fnmap){
   };
 
   // apply the route
+  var self = this, id = this.id;
   this.app[method](route, middleware, function(req, res, next){
-    req.format = req.params.format || req.format || self.format;
-    if (req.format) res.type(req.format);
-    if ('object' == typeof fn) {
-      if (fn[req.format]) {
-        fn[req.format](req, res, next);
+    function callback(err, obj){
+      if (err) return next(err);
+      // TODO: ideally we should next() passed the
+      // route handler
+      if (null == obj) return res.send(404);
+      req[id] = obj;
+
+      req.format = req.params.format || req.format || self.format;
+      if (req.format) res.type(req.format);
+      if ('object' == typeof fn) {
+        if (fn[req.format]) {
+          fn[req.format](req, res, next);
+        } else {
+          res.format(fn);
+        }
       } else {
-        res.format(fn);
+        fn(req, res, next);
       }
+    };
+
+    // Maintain backward compatibility
+    if (2 == self.loadFunction.length) {
+      self.loadFunction(req.params[id], callback);
     } else {
-      fn(req, res, next);
+      self.loadFunction(req, req.params[id], callback);
     }
   });
 
@@ -259,7 +254,7 @@ Resource.prototype.add = function(resource){
  * @api private
  */
 
-Resource.prototype.mapDefaultAction = function(key, fn){
+Resource.prototype.mapDefaultAction = function(key, fn) {
   var middleware = this.middleware[key] || this.middleware['*'] || [];
   var fnmap = {'fn': fn, 'middleware': middleware};
   switch (key) {
